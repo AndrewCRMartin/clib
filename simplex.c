@@ -210,14 +210,13 @@ int NMDownhillSimplex(REAL **simplex, REAL *evaluations, int ndim,
                       REAL tol, int maxIter,
                       REAL (*funct)(REAL *x, int nd))
 {
-   REAL *newVertex          = (REAL *)malloc((ndim+1)*sizeof(REAL));
-   REAL *extraVertex        = (REAL *)malloc((ndim+1)*sizeof(REAL));
-   REAL *centreWithoutWorst = (REAL *)malloc((ndim+1)*sizeof(REAL));
-   REAL nVertices   = ndim+1;
-   int  iter   = 0,
-        retval = 0;
-
-   REAL residuals[N_RESIDUALS_CHECK];
+   REAL *newVertex          = NULL,
+        *extraVertex        = NULL,     
+        *centreWithoutWorst = NULL,
+        residuals[N_RESIDUALS_CHECK],
+        nVertices           = ndim+1;
+   int  iter                = 0,
+        retval              = 0;
 
    if((newVertex = (REAL *)malloc((ndim+1)*sizeof(REAL)))==NULL)
       retval=ERR_NOMEM;
@@ -270,7 +269,7 @@ int NMDownhillSimplex(REAL **simplex, REAL *evaluations, int ndim,
          retval = ERR_MAXITER;
       }
       
-      if(retval != 0)
+      if(retval != 0)           /* Error or convergence                       */
       {
          FREE(newVertex);
          FREE(extraVertex);
@@ -372,7 +371,12 @@ int NMDownhillSimplex(REAL **simplex, REAL *evaluations, int ndim,
             retval = ContractSimplexAroundBest(simplex, ndim, bestVertex,
                                                evaluations, funct);
             if(retval != 0)
+            {
+               FREE(newVertex);
+               FREE(extraVertex);
+               FREE(centreWithoutWorst);
                return(retval);
+            }
          }
       }
       else 
@@ -384,6 +388,9 @@ int NMDownhillSimplex(REAL **simplex, REAL *evaluations, int ndim,
          evaluations[worstVertex] = evalNewVertex;
       }
    }
+   FREE(newVertex);
+   FREE(extraVertex);
+   FREE(centreWithoutWorst);
    return(iter);
 }
 
@@ -528,6 +535,7 @@ int main(int argc, char **argv)
    }
    printf("E: %4.2g\n", evalAtCentroid);
    
+   blFreeArray2D((char **)simplex, NDIM+2, NDIM+1);
    
    if(iter<0)
       return(1);
